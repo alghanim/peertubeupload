@@ -19,7 +19,7 @@ import (
 	"time"
 )
 
-var baseURL = "http://peertube.localhost:9000/api/v1"
+var baseURL string
 var client *http.Client
 var c config.Config
 var accessToken model.AccessToken
