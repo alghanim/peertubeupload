@@ -66,7 +66,10 @@ func main() {
 		go gatherPaths(c.FolderConfig.Path, c.FolderConfig.Extensions, filesChan)
 
 		for f := range filesChan {
-			sem.Acquire(ctx, 1)
+			if err := sem.Acquire(ctx, 1); err != nil {
+				// handle the error
+				log.Fatalf("Failed to acquire semaphore: %v", err)
+			}
 			go func(f string) {
 				defer sem.Release(1)
 				// Process the file
@@ -95,7 +98,10 @@ func main() {
 			}(f)
 		}
 		// Wait for all processing to complete
-		sem.Acquire(ctx, (int64(c.ProccessConfig.Threads)))
+		if err := sem.Acquire(ctx, (int64(c.ProccessConfig.Threads))); err != nil {
+			// handle the error
+			log.Fatalf("Failed to acquire semaphore: %v", err)
+		}
 
 	} else if c.LoadType.LoadPathFromDB {
 		db, err := database.InitDB(c)
@@ -238,7 +244,7 @@ func uploadVideo(title string, description string, originalDateTime string, toke
 	_ = writer.WriteField("name", title)
 	// _ = writer.WriteField("description", description)
 	_ = writer.WriteField("commentsEnabled", "false")
-	// _ = writer.WriteField("originallyPublishedAt", originalDateTime)
+	_ = writer.WriteField("originallyPublishedAt", originalDateTime)
 	_ = writer.WriteField("privacy", "2")
 	_ = writer.WriteField("waitTranscoding", "true")
 	err := writer.Close()
@@ -336,17 +342,4 @@ func refreshAccessToken(loginClient model.Login, refreshToken string) (model.Acc
 	}
 
 	return accessToken, nil
-}
-
-func getExpirationTime() time.Time {
-	tokenMutex.Lock()
-	defer tokenMutex.Unlock()
-	return expirationTime
-}
-
-func setExpirationTime(t time.Time) {
-	tokenMutex.Lock()
-	defer tokenMutex.Unlock()
-	expirationTime = t
-	return
 }
