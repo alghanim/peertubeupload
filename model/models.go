@@ -50,7 +50,7 @@ type Video struct {
 }
 
 type VideoClass struct {
-	ID        string `json:"id"`
+	ID        int64  `json:"id"`
 	UUID      string `json:"uuid"`
 	ShortUUID string `json:"shortUUID"`
 }

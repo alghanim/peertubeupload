@@ -2,9 +2,10 @@ package main
 
 import (
 	"bytes"
+	"context"
+	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -14,9 +15,12 @@ import (
 	"peertubeupload/config"
 	"peertubeupload/database"
 	"peertubeupload/model"
+	"strings"
 	"sync"
 
 	"time"
+
+	"golang.org/x/sync/semaphore"
 )
 
 var baseURL string
@@ -36,14 +40,6 @@ func main() {
 
 	log.SetFlags(log.Lshortfile)
 
-	db, err := database.InitDB(c)
-	if err != nil {
-		panic(err)
-	}
-	if db != nil {
-
-		defer db.Close()
-	}
 	transport := &http.Transport{
 		MaxConnsPerHost:     10,
 		MaxIdleConns:        100,
@@ -54,23 +50,67 @@ func main() {
 		Timeout:   time.Minute * 10,
 		Transport: transport,
 	}
+
 	loginClient, err := loginPrerequisite()
 	if err != nil {
 		panic(err)
 	}
 
-	// accessToken, err := login(loginClient, "password", c.APIConfig.Username, c.APIConfig.Password)
-	// if err != nil {
-	// 	fmt.Println("Refresh the token or check what is going on")
-	// }
+	filesChan := make(chan string)
+	ctx := context.Background()
 
-	err = updateTokenIfNeeded(loginClient, "password", c.APIConfig.Username, c.APIConfig.Password)
-	if err != nil {
-		fmt.Println("Unable to get access token:", err)
-		return
+	sem := semaphore.NewWeighted(int64(c.ProccessConfig.Threads))
+
+	if c.LoadType.LoadFromFolder {
+
+		go gatherPaths(c.FolderConfig.Path, c.FolderConfig.Extensions, filesChan)
+
+		for f := range filesChan {
+			sem.Acquire(ctx, 1)
+			go func(f string) {
+				defer sem.Release(1)
+				// Process the file
+				err = updateTokenIfNeeded(loginClient, "password", c.APIConfig.Username, c.APIConfig.Password)
+				if err != nil {
+					fmt.Println("Unable to get access token:", err)
+					return
+				}
+
+				fileData, err := os.Stat(f)
+				if err != nil {
+					log.Println(err)
+				}
+
+				video, err := uploadVideo(filepath.Base(f), "", fileData.ModTime().Format("2006-01-02 15:04:05"), accessToken.AccessToken, f)
+				if err != nil {
+					fmt.Println()
+				}
+				jsonData, err := json.MarshalIndent(video, "", "    ")
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+
+				fmt.Println(string(jsonData))
+			}(f)
+		}
+		// Wait for all processing to complete
+		sem.Acquire(ctx, (int64(c.ProccessConfig.Threads)))
+
+	} else if c.LoadType.LoadPathFromDB {
+		db, err := database.InitDB(c)
+		if err != nil {
+			panic(err)
+		}
+		if db != nil {
+
+			defer db.Close()
+		}
+
+	} else {
+		fmt.Println("specify at least one load type .. ")
 	}
 
-	fmt.Println(accessToken, expirationTime)
 	// video, err := uploadVideo("golang", "this is a test from go", "1989-12-31 08:24", accessToken.AccessToken, "sample_1920x1080.wmv")
 
 	// if err != nil {
@@ -78,6 +118,29 @@ func main() {
 	// }
 	// fmt.Println(video.Video.ShortUUID)
 
+}
+
+func gatherPaths(root string, extensions []string, filesChan chan<- string) {
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			fmt.Printf("Error accessing path %q: %v\n", path, err)
+			return nil
+		}
+		if !info.IsDir() {
+			fileExt := strings.ToLower(filepath.Ext(info.Name()))
+			for _, ext := range extensions {
+				if ext == fileExt {
+					filesChan <- path
+					break
+				}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		fmt.Printf("Error walking the path %q: %v\n", root, err)
+	}
+	close(filesChan)
 }
 
 func loginPrerequisite() (model.Login, error) {
@@ -96,7 +159,7 @@ func loginPrerequisite() (model.Login, error) {
 	}
 	defer res.Body.Close()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return model.Login{}, err
 	}
@@ -136,7 +199,7 @@ func login(loginClient model.Login, grant_type string, username string, password
 	}
 	defer res.Body.Close()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return model.AccessToken{}, err
 	}
@@ -151,7 +214,7 @@ func login(loginClient model.Login, grant_type string, username string, password
 }
 
 func uploadVideo(title string, description string, originalDateTime string, token string, filePath string) (model.Video, error) {
-	url := "http://peertube.localhost:9000/api/v1/videos/upload"
+	url := baseURL + "/videos/upload"
 	method := "POST"
 
 	payload := &bytes.Buffer{}
@@ -173,9 +236,9 @@ func uploadVideo(title string, description string, originalDateTime string, toke
 	_ = writer.WriteField("channelId", "1")
 	_ = writer.WriteField("downloadEnabled", "false")
 	_ = writer.WriteField("name", title)
-	_ = writer.WriteField("description", description)
+	// _ = writer.WriteField("description", description)
 	_ = writer.WriteField("commentsEnabled", "false")
-	_ = writer.WriteField("originallyPublishedAt", originalDateTime)
+	// _ = writer.WriteField("originallyPublishedAt", originalDateTime)
 	_ = writer.WriteField("privacy", "2")
 	_ = writer.WriteField("waitTranscoding", "true")
 	err := writer.Close()
@@ -199,7 +262,7 @@ func uploadVideo(title string, description string, originalDateTime string, toke
 	}
 	defer res.Body.Close()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return model.Video{}, err
 	}
@@ -262,7 +325,7 @@ func refreshAccessToken(loginClient model.Login, refreshToken string) (model.Acc
 	}
 	defer res.Body.Close()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return model.AccessToken{}, err
 	}
@@ -273,4 +336,17 @@ func refreshAccessToken(loginClient model.Login, refreshToken string) (model.Acc
 	}
 
 	return accessToken, nil
+}
+
+func getExpirationTime() time.Time {
+	tokenMutex.Lock()
+	defer tokenMutex.Unlock()
+	return expirationTime
+}
+
+func setExpirationTime(t time.Time) {
+	tokenMutex.Lock()
+	defer tokenMutex.Unlock()
+	expirationTime = t
+	return
 }

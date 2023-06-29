@@ -2,7 +2,8 @@ package config
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"fmt"
+	"io"
 	"os"
 )
 
@@ -13,6 +14,15 @@ type Config struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	} `json:"apiConfig"`
+	LoadType struct {
+		LoadPathFromDB bool `json:"loadPathFromDB"`
+		LoadFromFolder bool `json:"loadFromFolder"`
+	} `json:"loadType"`
+	FolderConfig struct {
+		Path               string   `json:"path"`
+		SpecificExtensions bool     `json:"specificextensions"`
+		Extensions         []string `json:"extensions"`
+	} `json:"folderConfig"`
 	DBConfig struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
@@ -20,6 +30,9 @@ type Config struct {
 		Host     string `json:"host"`
 		Dbname   string `json:"dbname"`
 	} `json:"dbConfig"`
+	ProccessConfig struct {
+		Threads int `json:"threads"`
+	}
 }
 
 func (c *Config) LoadConfiguration(file string) {
@@ -34,10 +47,17 @@ func (c *Config) LoadConfiguration(file string) {
 				Username string `json:"username"`
 				Password string `json:"password"`
 			}{
-				URL:      "localhost",
+				URL:      "http://peertube.localhost",
 				Port:     "9000",
 				Username: "root",
 				Password: "ali12345",
+			},
+			LoadType: struct {
+				LoadPathFromDB bool `json:"loadPathFromDB"`
+				LoadFromFolder bool `json:"loadFromFolder"`
+			}{
+				LoadPathFromDB: false,
+				LoadFromFolder: true,
 			},
 			DBConfig: struct {
 				Username string `json:"username"`
@@ -52,12 +72,33 @@ func (c *Config) LoadConfiguration(file string) {
 				Host:     "localhost",
 				Dbname:   "postgres",
 			},
+			FolderConfig: struct {
+				Path               string   `json:"path"`
+				SpecificExtensions bool     `json:"specificextensions"`
+				Extensions         []string `json:"extensions"`
+			}{
+				Path:               "./videos/",
+				SpecificExtensions: true,
+				Extensions:         []string{".mp4", ".wmv"},
+			},
+			ProccessConfig: struct {
+				Threads int `json:"threads"`
+			}{
+				Threads: 1,
+			},
 		}
 		configJSON, _ := json.MarshalIndent(*c, "", " ")
-		_ = ioutil.WriteFile(file, configJSON, 0644)
+		_ = os.WriteFile(file, configJSON, 0644)
+		fmt.Println("No config file is there , created one for you .. please re-run the script after modifing the config.json file")
+		os.Exit(0)
 	} else {
+
 		defer configFile.Close()
-		byteValue, _ := ioutil.ReadAll(configFile)
-		json.Unmarshal(byteValue, c)
+		byteValue, _ := io.ReadAll(configFile)
+		err := json.Unmarshal(byteValue, c)
+		if err != nil {
+			panic("not able to read config.json ")
+		}
+
 	}
 }
