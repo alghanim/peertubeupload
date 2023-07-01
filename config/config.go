@@ -24,11 +24,15 @@ type Config struct {
 		Extensions         []string `json:"extensions"`
 	} `json:"folderConfig"`
 	DBConfig struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-		Port     string `json:"port"`
-		Host     string `json:"host"`
-		Dbname   string `json:"dbname"`
+		Username    string `json:"username"`
+		Password    string `json:"password"`
+		Port        string `json:"port"`
+		Host        string `json:"host"`
+		Dbname      string `json:"dbname"`
+		TableName   string `json:"table_name"`
+		Title       string `json:"title"`
+		Description string `json:"description"`
+		FilePath    string `json:"file_path"`
 	} `json:"dbConfig"`
 	ProccessConfig struct {
 		Threads int `json:"threads"`
@@ -60,17 +64,25 @@ func (c *Config) LoadConfiguration(file string) {
 				LoadFromFolder: true,
 			},
 			DBConfig: struct {
-				Username string `json:"username"`
-				Password string `json:"password"`
-				Port     string `json:"port"`
-				Host     string `json:"host"`
-				Dbname   string `json:"dbname"`
+				Username    string `json:"username"`
+				Password    string `json:"password"`
+				Port        string `json:"port"`
+				Host        string `json:"host"`
+				Dbname      string `json:"dbname"`
+				TableName   string `json:"table_name"`
+				Title       string `json:"title"`
+				Description string `json:"description"`
+				FilePath    string `json:"file_path"`
 			}{
-				Username: "postgres",
-				Password: "password",
-				Port:     "5432",
-				Host:     "localhost",
-				Dbname:   "postgres",
+				Username:    "postgres",
+				Password:    "password",
+				Port:        "5432",
+				Host:        "localhost",
+				Dbname:      "postgres",
+				TableName:   "media_table",
+				Title:       "title_column",
+				Description: "description_column",
+				FilePath:    "file_path_column",
 			},
 			FolderConfig: struct {
 				Path               string   `json:"path"`

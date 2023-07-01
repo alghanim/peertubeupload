@@ -54,3 +54,9 @@ type VideoClass struct {
 	UUID      string `json:"uuid"`
 	ShortUUID string `json:"shortUUID"`
 }
+
+type Media struct {
+	Title       string
+	Description string
+	FilePath    string
+}
