@@ -13,6 +13,7 @@ import (
 	"peertubeupload/database"
 	"peertubeupload/login"
 	"peertubeupload/media"
+	"peertubeupload/medialog"
 	"peertubeupload/model"
 	"strings"
 
@@ -115,9 +116,16 @@ func main() {
 				log.Println(err)
 			}
 
-			err = database.LogResultToDB(video, f)
-			if err != nil {
-				log.Println(err)
+			if c.LoadType.LogType == "db" {
+
+				err = medialog.LogResultToDB(video, f, &c, db)
+				if err != nil {
+					log.Println(err)
+				}
+			} else if c.LoadType.LogType == "file" {
+
+				medialog.LogResultToFile(video, f, &c)
+
 			}
 
 		}(f)

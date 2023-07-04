@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"peertubeupload/config"
-	"peertubeupload/model"
 
 	_ "github.com/godror/godror"
 	_ "github.com/lib/pq"
@@ -15,10 +14,11 @@ import (
 func InitDB(c config.Config) (*sql.DB, error) {
 	var connStr string
 	var db *sql.DB
+	var err error
 	switch c.DBConfig.DBType {
 	case "postgres":
 		connStr = fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=disable", c.DBConfig.Username, c.DBConfig.Password, c.DBConfig.Dbname, c.DBConfig.Host, c.DBConfig.Port)
-		db, err := sql.Open("postgres", connStr)
+		db, err = sql.Open("postgres", connStr)
 		if err != nil {
 			return nil, err
 		}
@@ -248,9 +248,4 @@ func addColumnOracle(db *sql.DB, tableName, columnName string) error {
 	query := fmt.Sprintf("ALTER TABLE %s ADD %s VARCHAR2(255)", tableName, columnName)
 	_, err := db.Exec(query)
 	return err
-}
-
-func LogResultToDB(media model.Video, f model.Media) error {
-
-	return nil
 }
