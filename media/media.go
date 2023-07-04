@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"peertubeupload/config"
+	"peertubeupload/logger"
 	"peertubeupload/model"
 )
 
@@ -134,11 +135,13 @@ func getMetaData(filepath string) (model.Metadata, error) {
 	cmd.Stderr = &stderr
 	output, err := cmd.Output()
 	if err != nil {
+		logger.LogError("ffprobe didn't work properly", map[string]interface{}{"error": err, "function": "getMetaData"})
 		return model.Metadata{}, err
 	}
 
 	metadata, err := model.UnmarshalMetadata(output)
 	if err != nil {
+		logger.LogError("metadata ubnarshal is not done", map[string]interface{}{"error": err, "function": "getMetaData"})
 		return model.Metadata{}, err
 	}
 

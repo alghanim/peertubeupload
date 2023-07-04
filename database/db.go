@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"peertubeupload/config"
+	"peertubeupload/logger"
 
 	_ "github.com/godror/godror"
 	_ "github.com/lib/pq"
@@ -57,7 +58,7 @@ func InitDB(c config.Config) (*sql.DB, error) {
 
 	}
 
-	fmt.Println("Table and columns are checked and created/modified successfully!")
+	logger.LogInfo("Table and columns are checked and created/modified successfully!", nil)
 
 	return db, nil
 }

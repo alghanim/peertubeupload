@@ -4,13 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
+
 	"net/http"
 	"os"
 	"path/filepath"
 	"peertubeupload/auth"
 	"peertubeupload/config"
 	"peertubeupload/database"
+	"peertubeupload/logger"
 	"peertubeupload/login"
 	"peertubeupload/media"
 	"peertubeupload/medialog"
@@ -19,6 +20,7 @@ import (
 
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -29,6 +31,7 @@ var c config.Config
 // var refreshToken string
 
 func init() {
+
 	c.LoadConfiguration("config.json")
 	baseURL = fmt.Sprintf("%s:%s/api/v1", c.APIConfig.URL, c.APIConfig.Port)
 }
@@ -36,7 +39,6 @@ func init() {
 func main() {
 
 	var db *sql.DB
-	log.SetFlags(log.Lshortfile)
 
 	transport := &http.Transport{
 		MaxConnsPerHost:     10,
@@ -53,7 +55,8 @@ func main() {
 
 	loginClient, err := loginManager.LoginPrerequisite(baseURL, client)
 	if err != nil {
-		panic(err)
+		logger.LogError(err.Error(), nil)
+		os.Exit(1)
 	}
 
 	filesChan := make(chan model.Media)
@@ -113,7 +116,6 @@ func main() {
 
 			video, err := media.UploadMedia(baseURL, client, f.Title, "", fileData.ModTime().Format("2006-01-02 15:04:05"), loginManager.GetAccessToken(), f.FilePath, &c)
 			if err != nil {
-				log.Println(err)
 				return
 			}
 

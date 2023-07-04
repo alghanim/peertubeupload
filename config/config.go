@@ -2,9 +2,9 @@ package config
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
+	"peertubeupload/logger"
 )
 
 type Config struct {
@@ -134,16 +134,18 @@ func (c *Config) LoadConfiguration(file string) {
 		}
 		configJSON, _ := json.MarshalIndent(*c, "", " ")
 		_ = os.WriteFile(file, configJSON, 0644)
-		fmt.Println("No config file is there , created one for you .. please re-run the script after modifing the config.json file")
+		logger.LogInfo("No config file is there , created one for you .. please re-run the script after modifing the config.json file", nil)
 		if _, err := os.Stat(c.LoadType.TempFolder); os.IsNotExist(err) {
 			// If the directory does not exist, create it
 			errDir := os.MkdirAll(c.LoadType.TempFolder, 0755)
 			if errDir != nil {
 				panic(err)
 			}
-			fmt.Println("Directory created")
+			logger.LogInfo("Directory created", nil)
+
 		} else {
-			fmt.Println("Directory already exists")
+			logger.LogInfo("Directory already exists", nil)
+
 		}
 		os.Exit(0)
 	} else {
@@ -160,9 +162,10 @@ func (c *Config) LoadConfiguration(file string) {
 			if errDir != nil {
 				panic(err)
 			}
-			fmt.Println("Directory created")
+			logger.LogInfo("TEMP Directory created", nil)
+
 		} else {
-			fmt.Println("Directory already exists")
+			logger.LogInfo("TEMP Directory exists", nil)
 		}
 
 	}
