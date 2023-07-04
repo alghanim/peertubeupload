@@ -114,6 +114,7 @@ func main() {
 			video, err := media.UploadMedia(baseURL, client, f.Title, "", fileData.ModTime().Format("2006-01-02 15:04:05"), loginManager.GetAccessToken(), f.FilePath, &c)
 			if err != nil {
 				log.Println(err)
+				return
 			}
 
 			if c.LoadType.LogType == "db" {
