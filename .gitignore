@@ -3,3 +3,4 @@ mediacms/
 config.json
 tmp
 data.json
+log.json
