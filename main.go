@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,8 +12,8 @@ import (
 	"peertubeupload/config"
 	"peertubeupload/database"
 	"peertubeupload/login"
+	"peertubeupload/media"
 	"peertubeupload/model"
-	"peertubeupload/video"
 	"strings"
 
 	"time"
@@ -35,6 +34,7 @@ func init() {
 
 func main() {
 
+	var db *sql.DB
 	log.SetFlags(log.Lshortfile)
 
 	transport := &http.Transport{
@@ -62,10 +62,20 @@ func main() {
 
 	if c.LoadType.LoadFromFolder {
 
+		if c.LoadType.LogType == "db" {
+			db, err = database.InitDB(c)
+			if err != nil {
+				panic(err)
+			}
+			if db != nil {
+
+				defer db.Close()
+			}
+		}
 		go gatherPathsFromFolder(c.FolderConfig.Path, c.LoadType.Extensions, filesChan)
 
 	} else if c.LoadType.LoadPathFromDB {
-		db, err := database.InitDB(c)
+		db, err = database.InitDB(c)
 		if err != nil {
 			panic(err)
 		}
@@ -73,6 +83,7 @@ func main() {
 
 			defer db.Close()
 		}
+
 		go gatherPathsFromDB(db, &c, c.LoadType.Extensions, filesChan)
 
 	} else {
@@ -99,17 +110,16 @@ func main() {
 				log.Println(err)
 			}
 
-			video, err := video.UploadVideo(baseURL, client, f.Title, "", fileData.ModTime().Format("2006-01-02 15:04:05"), loginManager.GetAccessToken(), f.FilePath)
+			video, err := media.UploadMedia(baseURL, client, f.Title, "", fileData.ModTime().Format("2006-01-02 15:04:05"), loginManager.GetAccessToken(), f.FilePath, &c)
 			if err != nil {
-				fmt.Println()
-			}
-			jsonData, err := json.MarshalIndent(video, "", "    ")
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				log.Println(err)
 			}
 
-			fmt.Println(string(jsonData))
+			err = database.LogResultToDB(video, f)
+			if err != nil {
+				log.Println(err)
+			}
+
 		}(f)
 	}
 	// Wait for all processing to complete
@@ -152,7 +162,7 @@ func gatherPathsFromFolder(root string, extensions []string, filesChan chan<- mo
 			for _, ext := range extensions {
 				if ext == fileExt {
 					filesChan <- model.Media{
-						Title:       info.Name(),
+						Title:       media.GetFileName(path),
 						Description: "",
 						FilePath:    path,
 					}
