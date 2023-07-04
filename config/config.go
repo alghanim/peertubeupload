@@ -15,13 +15,13 @@ type Config struct {
 		Password string `json:"password"`
 	} `json:"apiConfig"`
 	LoadType struct {
-		LoadPathFromDB bool `json:"loadPathFromDB"`
-		LoadFromFolder bool `json:"loadFromFolder"`
+		LoadPathFromDB bool     `json:"loadPathFromDB"`
+		LoadFromFolder bool     `json:"loadFromFolder"`
+		Extensions     []string `json:"extensions"`
 	} `json:"loadType"`
 	FolderConfig struct {
-		Path               string   `json:"path"`
-		SpecificExtensions bool     `json:"specificextensions"`
-		Extensions         []string `json:"extensions"`
+		Path               string `json:"path"`
+		SpecificExtensions bool   `json:"specificextensions"`
 	} `json:"folderConfig"`
 	DBConfig struct {
 		Username    string `json:"username"`
@@ -57,11 +57,13 @@ func (c *Config) LoadConfiguration(file string) {
 				Password: "ali12345",
 			},
 			LoadType: struct {
-				LoadPathFromDB bool `json:"loadPathFromDB"`
-				LoadFromFolder bool `json:"loadFromFolder"`
+				LoadPathFromDB bool     `json:"loadPathFromDB"`
+				LoadFromFolder bool     `json:"loadFromFolder"`
+				Extensions     []string `json:"extensions"`
 			}{
 				LoadPathFromDB: false,
 				LoadFromFolder: true,
+				Extensions:     []string{".mp4", ".wmv"},
 			},
 			DBConfig: struct {
 				Username    string `json:"username"`
@@ -85,13 +87,11 @@ func (c *Config) LoadConfiguration(file string) {
 				FilePath:    "file_path_column",
 			},
 			FolderConfig: struct {
-				Path               string   `json:"path"`
-				SpecificExtensions bool     `json:"specificextensions"`
-				Extensions         []string `json:"extensions"`
+				Path               string `json:"path"`
+				SpecificExtensions bool   `json:"specificextensions"`
 			}{
 				Path:               "./videos/",
 				SpecificExtensions: true,
-				Extensions:         []string{".mp4", ".wmv"},
 			},
 			ProccessConfig: struct {
 				Threads int `json:"threads"`
