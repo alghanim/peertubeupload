@@ -34,30 +34,27 @@ func LogResultToFile(media model.Video, f model.Media, c *config.Config) error {
 }
 func LogResultToDB(media model.Video, f model.Media, c *config.Config, db *sql.DB) error {
 
-	if !c.DBConfig.UpdateSameTable {
-
-		switch c.DBConfig.DBType {
-		case "postgres":
-			insertQuery := `
+	switch c.DBConfig.DBType {
+	case "postgres":
+		insertQuery := `
 			INSERT INTO public.peertube_log (id, uuid, shortuuid, file_path)
 		VALUES ($1, $2, $3, $4)
 		`
-			_, err := db.Exec(insertQuery, media.Video.ID, media.Video.UUID, media.Video.ShortUUID, f.FilePath)
-			if err != nil {
-				return err
-			}
-		case "oracle":
-			insertQuery := `
+		_, err := db.Exec(insertQuery, media.Video.ID, media.Video.UUID, media.Video.ShortUUID, f.FilePath)
+		if err != nil {
+			return err
+		}
+	case "oracle":
+		insertQuery := `
 			INSERT INTO peertube_log (id, uuid, shortuuid, file_path)
 		VALUES (:1, :2, :3, :4)
 		`
-			_, err := db.Exec(insertQuery, media.Video.ID, media.Video.UUID, media.Video.ShortUUID, f.FilePath)
-			if err != nil {
-				return err
-			}
-
+		_, err := db.Exec(insertQuery, media.Video.ID, media.Video.UUID, media.Video.ShortUUID, f.FilePath)
+		if err != nil {
+			return err
 		}
 
 	}
+
 	return nil
 }

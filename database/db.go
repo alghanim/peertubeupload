@@ -15,6 +15,14 @@ func InitDB(c config.Config) (*sql.DB, error) {
 	var connStr string
 	var db *sql.DB
 	var err error
+	var combinedColumns []string
+	if c.LoadType.LoadPathFromDB {
+		combinedColumns = append(c.DBConfig.MediaIdentifier, c.DBConfig.ReferenceColumns...)
+
+	} else {
+		combinedColumns = c.DBConfig.ReferenceColumns
+	}
+
 	switch c.DBConfig.DBType {
 	case "postgres":
 		connStr = fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=disable", c.DBConfig.Username, c.DBConfig.Password, c.DBConfig.Dbname, c.DBConfig.Host, c.DBConfig.Port)
@@ -26,9 +34,8 @@ func InitDB(c config.Config) (*sql.DB, error) {
 		if err != nil {
 			return nil, err
 		}
-		if !c.DBConfig.UpdateSameTable {
-			err = checkAndCreateOrModifyPostgres(db, "peertube_log", c.DBConfig.ReferenceColumns...)
-		}
+
+		err = checkAndCreateOrModifyPostgres(db, "peertube_log", combinedColumns...)
 
 		if err != nil {
 			logger.LogError("Failed to check and create/modify table and columns", map[string]interface{}{"error": err})
@@ -46,9 +53,8 @@ func InitDB(c config.Config) (*sql.DB, error) {
 		if err != nil {
 			return nil, err
 		}
-		if !c.DBConfig.UpdateSameTable {
-			err = checkAndCreateOrModifyOracle(db, "peertube_log", c.DBConfig.ReferenceColumns...)
-		}
+
+		err = checkAndCreateOrModifyOracle(db, "peertube_log", combinedColumns...)
 
 		if err != nil {
 			logger.LogError("Failed to check and create/modify table and columns", map[string]interface{}{"error": err})

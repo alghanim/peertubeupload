@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Peertube Upload Configuration</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #343a40;
+            color: #fff;
+        }
+        .container {
+            max-width: 800px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <h2 class="mb-3">Peertube Upload Configuration</h2>
+        <form id="configForm">
+            <div class="row">
+                <div class="col-md-6">
+                    <h3 class="mb-3">API Configuration</h3>
+                    <div class="form-group">
+                        <label for="apiUrl">API URL:</label>
+                        <input type="text" id="apiUrl" name="APIConfig[URL]" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="apiPort">API Port:</label>
+                        <input type="text" id="apiPort" name="APIConfig[Port]" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="apiUsername">API Username:</label>
+                        <input type="text" id="apiUsername" name="APIConfig[Username]" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="apiPassword">API Password:</label>
+                        <input type="password" id="apiPassword" name="APIConfig[Password]" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="apiChannelId">API Channel ID:</label>
+                        <input type="text" id="apiChannelId" name="APIConfig[ChannelID]" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="apiDownloadEnabled">API Download Enabled:</label>
+                        <input type="text" id="apiDownloadEnabled" name="APIConfig[DownloadEnabled]" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="apiCommentsEnabled">API Comments Enabled:</label>
+                        <input type="text" id="apiCommentsEnabled" name="APIConfig[CommentsEnabled]" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="apiPrivacy">API Privacy:</label>
+                        <input type="text" id="apiPrivacy" name="APIConfig[Privacy]" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="apiWaitTranscoding">API Wait Transcoding:</label>
+                        <input type="text" id="apiWaitTranscoding" name="APIConfig[WaitTranscoding]" class="form-control">
+                    </div>
+
+                    <h3 class="mb-3">Load Type</h3>
+                    <div class="form-group">
+                        <label for="loadPathFromDB">Load Path From DB:</label>
+                        <input type="checkbox" id="loadPathFromDB" name="LoadType[LoadPathFromDB]">
+                    </div>
+                    <div class="form-group">
+                        <label for="loadFromFolder">Load From Folder:</label>
+
+                        <input type="checkbox" id="loadFromFolder" name="LoadType[LoadFromFolder]">
+                    </div>
+                    <div class="form-group">
+                        <label for="specificExtensions">Specific Extensions:</label>
+                        <input type="checkbox" id="specificExtensions" name="LoadType[SpecificExtensions]">
+                    </div>
+                    <div class="form-group">
+                        <label for="extensions">Extensions:</label>
+                        <input type="text" id="extensions" name="LoadType[Extensions]" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="convertAudioToMp3">Convert Audio To Mp3:</label>
+                        <input type="checkbox" id="convertAudioToMp3" name="LoadType[ConvertAudioToMp3]">
+                    </div>
+                    <div class="form-group">
+                        <label for="tempFolder">Temp Folder:</label>
+                        <input type="text" id="tempFolder" name="LoadType[TempFolder]" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="logType">Log Type:</label>
+                        <input type="text" id="logType" name="LoadType[LogType]" class="form-control">
+                    </div>
+
+                    <h3 class="mb-3">Folder Configuration</h3>
+                    <div class="form-group">
+                        <label for="folderPath">Folder Path:</label>
+                        <input type="text" id="folderPath" name="FolderConfig[Path]" class="form-control">
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <h3 class="mb-3">Database Configuration</h3>
+                    <div class="form-group">
+                        <label for="dbType">DB Type:</label>
+                        <input type="text" id="dbType" name="DBConfig[DBType]" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="dbUsername">DB Username:</label>
+                        <input type="text" id="dbUsername" name="DBConfig[Username]" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="dbPassword">DB Password:</label>
+                        <input type="password" id="dbPassword" name="DBConfig[Password]" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="dbPort">DB Port:</label>
+                        <input type="text" id="dbPort" name="DBConfig[Port]" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="dbHost">DB Host:</label>
+                        <input type="text" id="dbHost" name="DBConfig[Host]" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="dbName">DB Name:</label>
+                        <input type="text" id="dbName" name="DBConfig[DBName]" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="dbMediaIdentifier">DB Media Identifier:</label>
+                        <input type="text" id="dbMediaIdentifier" name="DBConfig[MediaIdentifier]" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="dbTableName">DB Table Name:</label>
+      
+                        <input type="text" id="dbTableName" name="DBConfig[TableName]" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="dbTitle">DB Title:</label>
+                        <input type="text" id="dbTitle" name="DBConfig[Title]" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="dbDescription">DB Description:</label>
+                        <input type="text" id="dbDescription" name="DBConfig[Description]" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="dbFilePath">DB File Path:</label>
+                        <input type="text" id="dbFilePath" name="DBConfig[FilePath]" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="dbUpdateSameTable">DB Update Same Table:</label>
+                        <input type="checkbox" id="dbUpdateSameTable" name="DBConfig[UpdateSameTable]">
+                    </div>
+                    <div class="form-group">
+                        <label for="dbReferenceColumns">DB Reference Columns:</label>
+                        <input type="text" id="dbReferenceColumns" name="DBConfig[ReferenceColumns]" class="form-control">
+                    </div>
+
+                    <h3 class="mb-3">Process Configuration</h3>
+                    <div class="form-group">
+                        <label for="threads">Threads:</label>
+                        <input type="number" id="threads" name="ProccessConfig[Threads]" class="form-control">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-3">Start Processing</button>
+        </form>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script>
+        $('#configForm').on('submit', function(e) {
+            e.preventDefault();
+            var formData = $(this).serialize();
+            $.post('/start_processing', formData, function(response) {
+                // Handle the response from the server
+            });
+        });
+    </script>
+</body>
+</html>

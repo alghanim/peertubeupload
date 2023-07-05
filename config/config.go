@@ -43,7 +43,6 @@ type Config struct {
 		Title            string   `json:"title"`
 		Description      string   `json:"description"`
 		FilePath         string   `json:"file_path"`
-		UpdateSameTable  bool     `json:"updateSameTable"`
 		ReferenceColumns []string `json:"reference_columns"`
 	} `json:"dbConfig"`
 	ProccessConfig struct {
@@ -107,7 +106,6 @@ func (c *Config) LoadConfiguration(file string) {
 				Title            string   `json:"title"`
 				Description      string   `json:"description"`
 				FilePath         string   `json:"file_path"`
-				UpdateSameTable  bool     `json:"updateSameTable"`
 				ReferenceColumns []string `json:"reference_columns"`
 			}{
 				DBType:           "postgres or oracle",
@@ -121,7 +119,6 @@ func (c *Config) LoadConfiguration(file string) {
 				Title:            "title_column",
 				Description:      "description_column",
 				FilePath:         "file_path_column",
-				UpdateSameTable:  false,
 				ReferenceColumns: []string{"id", "uuid", "shortuuid", "file_path"},
 			},
 			FolderConfig: struct {

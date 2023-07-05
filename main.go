@@ -143,6 +143,9 @@ func main() {
 
 func gatherPathsFromDB(db *sql.DB, config *config.Config, extensions []string, filechan chan<- model.Media) {
 	// Query the database for video details
+	// combinedColumns := append([]string{config.DBConfig.Title, config.DBConfig.Description, config.DBConfig.FilePath}, config.DBConfig.MediaIdentifier...)
+	// rows, err := db.Query(fmt.Sprintf("SELECT %s FROM %s",
+	// 	strings.Join(combinedColumns, ","), config.DBConfig.TableName))
 	rows, err := db.Query(fmt.Sprintf("SELECT %s, %s, %s FROM %s",
 		config.DBConfig.Title, config.DBConfig.Description, config.DBConfig.FilePath, config.DBConfig.TableName))
 	if err != nil {
@@ -150,9 +153,24 @@ func gatherPathsFromDB(db *sql.DB, config *config.Config, extensions []string, f
 		os.Exit(1)
 	}
 	defer rows.Close()
+	// values := make([]interface{}, len(combinedColumns))
+	// valuePtrs := make([]interface{}, len(combinedColumns))
 
 	// Iterate through the rows and upload each video
 	for rows.Next() {
+		// for i := 0; i < len(combinedColumns); i++ {
+		// 	valuePtrs[i] = &values[i]
+		// }
+		// err = rows.Scan(valuePtrs...)
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+		// row := make(map[string]interface{})
+		// for i, colName := range combinedColumns {
+		// 	val := valuePtrs[i].(*interface{})
+		// 	row[colName] = *val
+		// }
+		// fmt.Println(row)
 		var media model.Media
 		if err := rows.Scan(&media.Title, &media.Description, &media.FilePath); err != nil {
 			logger.LogWarning("Not able to scan result", map[string]interface{}{"error": err})
