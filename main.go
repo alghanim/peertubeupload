@@ -4,13 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
-	"net/http"
 	"os"
 	"path/filepath"
 	"peertubeupload/auth"
 	"peertubeupload/config"
 	"peertubeupload/database"
+	"peertubeupload/httpclient"
 	"peertubeupload/logger"
 	"peertubeupload/login"
 	"peertubeupload/media"
@@ -18,20 +19,14 @@ import (
 	"peertubeupload/model"
 	"strings"
 
-	"time"
-
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
 )
 
 var baseURL string
-var client *http.Client
 var c config.Config
 
-// var refreshToken string
-
 func init() {
-
 	c.LoadConfiguration("config.json")
 	baseURL = fmt.Sprintf("%s:%s/api/v1", c.APIConfig.URL, c.APIConfig.Port)
 }
@@ -39,20 +34,8 @@ func init() {
 func main() {
 
 	var db *sql.DB
-
-	transport := &http.Transport{
-		MaxConnsPerHost:     10,
-		MaxIdleConns:        100,
-		MaxIdleConnsPerHost: 100,
-	}
-
-	client = &http.Client{
-		Timeout:   time.Minute * 10,
-		Transport: transport,
-	}
-
+	client := httpclient.New()
 	var loginManager auth.Authenticator = &login.LoginManager{}
-
 	loginClient, err := loginManager.LoginPrerequisite(baseURL, client)
 	if err != nil {
 		logger.LogError(err.Error(), nil)
@@ -83,15 +66,17 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		if db != nil {
 
+		if db != nil {
 			defer db.Close()
 		}
 
 		go gatherPathsFromDB(db, &c, c.LoadType.Extensions, filesChan)
 
 	} else {
-		fmt.Println("specify at least one load type .. ")
+		logger.LogError("You need to specify at least one load type either db or file", nil)
+		logger.LogError("App will exit, please check config.json under loadConfig section", nil)
+		os.Exit(1)
 	}
 
 	for f := range filesChan {
@@ -105,17 +90,27 @@ func main() {
 
 			err = loginManager.UpdateTokenIfNeeded(baseURL, client, loginClient, "password", c.APIConfig.Username, c.APIConfig.Password)
 			if err != nil {
-				log.Println("Unable to get access token:", err)
+				logger.LogError("Unable to get access token", map[string]interface{}{"error": err})
 				return
 			}
 
 			fileData, err := os.Stat(f.FilePath)
 			if err != nil {
-				log.Println(err)
+				logger.LogError("unable to get file data to retrive the original date, today date will be submitted", map[string]interface{}{"error": err})
+				fileData = nil
 			}
 
-			video, err := media.UploadMedia(baseURL, client, f.Title, "", fileData.ModTime().Format("2006-01-02 15:04:05"), loginManager.GetAccessToken(), f.FilePath, &c)
+			var video model.Video
+
+			if fileData != nil {
+				video, err = media.UploadMedia(baseURL, client, f.Title, "", fileData.ModTime().Format("2006-01-02 15:04:05"), loginManager.GetAccessToken(), f.FilePath, &c)
+
+			} else {
+				video, err = media.UploadMedia(baseURL, client, f.Title, "", time.Now().Format("2006-01-02 15:04:05"), loginManager.GetAccessToken(), f.FilePath, &c)
+
+			}
 			if err != nil {
+				logger.LogError("error uploading media", map[string]interface{}{"error": err, "file": f.FilePath})
 				return
 			}
 
@@ -123,12 +118,17 @@ func main() {
 
 				err = medialog.LogResultToDB(video, f, &c, db)
 				if err != nil {
-					log.Println(err)
+					logger.LogError("failed to log result in DB", map[string]interface{}{"error": err})
 				}
 			} else if c.LoadType.LogType == "file" {
 
-				medialog.LogResultToFile(video, f, &c)
+				err := medialog.LogResultToFile(video, f, &c)
+				if err != nil {
+					logger.LogError("failed to log result in file", map[string]interface{}{"error": err})
+				}
 
+			} else if c.LoadType.LogType == "none" {
+				logger.LogInfo("DONE UPLOADING ", map[string]interface{}{"file": f.FilePath})
 			}
 
 		}(f)
@@ -146,8 +146,8 @@ func gatherPathsFromDB(db *sql.DB, config *config.Config, extensions []string, f
 	rows, err := db.Query(fmt.Sprintf("SELECT %s, %s, %s FROM %s",
 		config.DBConfig.Title, config.DBConfig.Description, config.DBConfig.FilePath, config.DBConfig.TableName))
 	if err != nil {
-		log.Println(err)
-		return
+		logger.LogError("Failed to get paths from DB", map[string]interface{}{"error": err})
+		os.Exit(1)
 	}
 	defer rows.Close()
 
@@ -155,8 +155,8 @@ func gatherPathsFromDB(db *sql.DB, config *config.Config, extensions []string, f
 	for rows.Next() {
 		var media model.Media
 		if err := rows.Scan(&media.Title, &media.Description, &media.FilePath); err != nil {
-			fmt.Println(err)
-			return
+			logger.LogWarning("Not able to scan result", map[string]interface{}{"error": err})
+			continue
 		}
 		filechan <- media
 	}
@@ -165,7 +165,7 @@ func gatherPathsFromDB(db *sql.DB, config *config.Config, extensions []string, f
 func gatherPathsFromFolder(root string, extensions []string, filesChan chan<- model.Media) {
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			fmt.Printf("Error accessing path %q: %v\n", path, err)
+			logger.LogError("Error accessing path", map[string]interface{}{"Path": path, "error": err})
 			return nil
 		}
 		if !info.IsDir() {
@@ -184,7 +184,7 @@ func gatherPathsFromFolder(root string, extensions []string, filesChan chan<- mo
 		return nil
 	})
 	if err != nil {
-		fmt.Printf("Error walking the path %q: %v\n", root, err)
+		logger.LogError("Error walking the path", map[string]interface{}{"Path": root, "error": err})
 	}
 	close(filesChan)
 }

@@ -3,7 +3,6 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 	"peertubeupload/config"
 	"peertubeupload/logger"
@@ -32,7 +31,7 @@ func InitDB(c config.Config) (*sql.DB, error) {
 		}
 
 		if err != nil {
-			log.Println("Failed to check and create/modify table and columns:", err)
+			logger.LogError("Failed to check and create/modify table and columns", map[string]interface{}{"error": err})
 			os.Exit(1)
 		}
 
@@ -48,11 +47,11 @@ func InitDB(c config.Config) (*sql.DB, error) {
 			return nil, err
 		}
 		if !c.DBConfig.UpdateSameTable {
-			err = checkAndCreateOrModifyPostgres(db, "peertube_log", c.DBConfig.ReferenceColumns...)
+			err = checkAndCreateOrModifyOracle(db, "peertube_log", c.DBConfig.ReferenceColumns...)
 		}
 
 		if err != nil {
-			log.Println("Failed to check and create/modify table and columns:", err)
+			logger.LogError("Failed to check and create/modify table and columns", map[string]interface{}{"error": err})
 			os.Exit(1)
 		}
 

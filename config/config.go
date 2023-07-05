@@ -38,6 +38,7 @@ type Config struct {
 		Port             string   `json:"port"`
 		Host             string   `json:"host"`
 		Dbname           string   `json:"dbname"`
+		MediaIdentifier  []string `json:"media_identifier"`
 		TableName        string   `json:"table_name"`
 		Title            string   `json:"title"`
 		Description      string   `json:"description"`
@@ -92,7 +93,7 @@ func (c *Config) LoadConfiguration(file string) {
 				Extensions:         []string{".mp4", ".wmv"},
 				ConvertAudioToMp3:  true,
 				TempFolder:         "./tmp/",
-				LogType:            "db or file",
+				LogType:            "db , file or none",
 			},
 			DBConfig: struct {
 				DBType           string   `json:"dbType"`
@@ -101,6 +102,7 @@ func (c *Config) LoadConfiguration(file string) {
 				Port             string   `json:"port"`
 				Host             string   `json:"host"`
 				Dbname           string   `json:"dbname"`
+				MediaIdentifier  []string `json:"media_identifier"`
 				TableName        string   `json:"table_name"`
 				Title            string   `json:"title"`
 				Description      string   `json:"description"`
@@ -115,6 +117,7 @@ func (c *Config) LoadConfiguration(file string) {
 				Host:             "localhost",
 				Dbname:           "dbname",
 				TableName:        "media_table",
+				MediaIdentifier:  []string{"id", "sub_id"},
 				Title:            "title_column",
 				Description:      "description_column",
 				FilePath:         "file_path_column",
