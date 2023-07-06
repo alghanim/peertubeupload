@@ -11,7 +11,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func InitDB(c config.Config) (*sql.DB, error) {
+func InitDB(c *config.Config) (*sql.DB, error) {
 	var connStr string
 	var db *sql.DB
 	var err error
@@ -23,6 +23,7 @@ func InitDB(c config.Config) (*sql.DB, error) {
 		combinedColumns = c.DBConfig.ReferenceColumns
 	}
 
+	var logTableName string
 	switch c.DBConfig.DBType {
 	case "postgres":
 		connStr = fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=disable", c.DBConfig.Username, c.DBConfig.Password, c.DBConfig.Dbname, c.DBConfig.Host, c.DBConfig.Port)
@@ -35,7 +36,13 @@ func InitDB(c config.Config) (*sql.DB, error) {
 			return nil, err
 		}
 
-		err = checkAndCreateOrModifyPostgres(db, "peertube_log", combinedColumns...)
+		if c.LoadType.LoadPathFromDB {
+			logTableName = fmt.Sprintf("%s_to_peertube_log", c.DBConfig.TableName)
+		} else {
+			logTableName = "peertube_log"
+		}
+
+		err = checkAndCreateOrModifyPostgres(db, logTableName, combinedColumns...)
 
 		if err != nil {
 			logger.LogError("Failed to check and create/modify table and columns", map[string]interface{}{"error": err})
@@ -54,7 +61,7 @@ func InitDB(c config.Config) (*sql.DB, error) {
 			return nil, err
 		}
 
-		err = checkAndCreateOrModifyOracle(db, "peertube_log", combinedColumns...)
+		err = checkAndCreateOrModifyOracle(db, logTableName, combinedColumns...)
 
 		if err != nil {
 			logger.LogError("Failed to check and create/modify table and columns", map[string]interface{}{"error": err})

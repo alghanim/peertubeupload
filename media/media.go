@@ -60,14 +60,16 @@ func UploadMedia(baseURL string, client *http.Client, title string, description 
 
 		filename := GetFileName(fPath)
 
-		tmpfilePath = fmt.Sprintf("%s.mp3", path.Join(c.LoadType.TempFolder, filename))
+		if c.LoadType.ConvertAudioToMp3 {
+			tmpfilePath = fmt.Sprintf("%s.mp3", path.Join(c.LoadType.TempFolder, filename))
 
-		err := convertToMp3(fPath, tmpfilePath)
-		if err != nil {
-			return model.Video{}, err
+			err := convertToMp3(fPath, tmpfilePath)
+			if err != nil {
+				return model.Video{}, err
+			}
+			fPath = tmpfilePath
 		}
 
-		fPath = tmpfilePath
 		file, errFile1 := os.Open(fPath)
 		if errFile1 != nil {
 			return model.Video{}, errFile1

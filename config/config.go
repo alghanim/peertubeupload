@@ -119,7 +119,7 @@ func (c *Config) LoadConfiguration(file string) {
 				Title:            "title_column",
 				Description:      "description_column",
 				FilePath:         "file_path_column",
-				ReferenceColumns: []string{"id", "uuid", "shortuuid", "file_path"},
+				ReferenceColumns: []string{"peertube_id", "uuid", "shortuuid", "file_path"},
 			},
 			FolderConfig: struct {
 				Path string `json:"path"`
