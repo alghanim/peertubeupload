@@ -18,6 +18,10 @@ import (
 var c config.Config
 var baseURL string
 
+const (
+	VideoChunkSize VideoFileByteCounter = 1024 * 1024 * 2
+)
+
 func init() {
 	c.LoadConfiguration("config.json")
 	baseURL = fmt.Sprintf("%s:%s/api/v1", c.APIConfig.URL, c.APIConfig.Port)
