@@ -53,11 +53,13 @@ func ProcessFromFileSystem(c config.Config, filesChan chan model.Media, loginCli
 			var video model.Video
 
 			if fileData != nil {
-				video, err = UploadMedia(baseURL, client, f.Title, "", fileData.ModTime().Format("2006-01-02 15:04:05"), loginManager.GetAccessToken(), f.FilePath, &c)
-
+				f.CreateDate = fileData.ModTime()
+				// video, err = UploadMedia(baseURL, client, f.Title, "", fileData.ModTime().Format("2006-01-02 15:04:05"), loginManager.GetAccessToken(), f.FilePath, &c)
+				video, err = UploadMediaInChunksOS(&c, f, loginManager.GetAccessToken())
 			} else {
-				video, err = UploadMedia(baseURL, client, f.Title, "", time.Now().Format("2006-01-02 15:04:05"), loginManager.GetAccessToken(), f.FilePath, &c)
-
+				f.CreateDate = time.Now()
+				// video, err = UploadMedia(baseURL, client, f.Title, "", time.Now().Format("2006-01-02 15:04:05"), loginManager.GetAccessToken(), f.FilePath, &c)
+				video, err = UploadMediaInChunksOS(&c, f, loginManager.GetAccessToken())
 			}
 			if err != nil {
 				logger.LogError("error uploading media", map[string]interface{}{"error": err, "file": f.FilePath})
@@ -119,11 +121,30 @@ func ProcessFromDB(db *sql.DB, config *config.Config, filechan chan map[string]i
 			var video model.Video
 
 			title := fmt.Sprintf("%v", f[config.DBConfig.Title])
+			description := fmt.Sprintf("%v", f[config.DBConfig.Description])
+
 			if fileData != nil {
-				video, err = UploadMedia(baseURL, client, title, "", fileData.ModTime().Format("2006-01-02 15:04:05"), loginManager.GetAccessToken(), filePath, config)
+				media := model.Media{
+					Title:       title,
+					Description: description,
+					FilePath:    filePath,
+					CreateDate:  fileData.ModTime(),
+				}
+				video, err = UploadMediaInChunksOS(config, media, loginManager.GetAccessToken())
+
+				// video, err = UploadMedia(baseURL, client, title, "", fileData.ModTime().Format("2006-01-02 15:04:05"), loginManager.GetAccessToken(), filePath, config)
 
 			} else {
-				video, err = UploadMedia(baseURL, client, title, "", time.Now().Format("2006-01-02 15:04:05"), loginManager.GetAccessToken(), filePath, config)
+
+				media := model.Media{
+					Title:       title,
+					Description: description,
+					FilePath:    filePath,
+					CreateDate:  time.Now(),
+				}
+
+				video, err = UploadMediaInChunksOS(config, media, loginManager.GetAccessToken())
+				// video, err = UploadMedia(baseURL, client, title, "", time.Now().Format("2006-01-02 15:04:05"), loginManager.GetAccessToken(), filePath, config)
 
 			}
 			if err != nil {
@@ -170,6 +191,12 @@ func gatherPathsFromFolder(c *config.Config, filesChan chan<- model.Media) {
 						}
 						break
 					}
+				}
+			} else {
+				filesChan <- model.Media{
+					Title:       GetFileName(path),
+					Description: "",
+					FilePath:    path,
 				}
 			}
 		}

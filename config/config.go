@@ -13,11 +13,11 @@ type Config struct {
 		Port            string `json:"port"`
 		Username        string `json:"username"`
 		Password        string `json:"password"`
-		ChannelID       string `json:"channelId"`
-		DownloadEnabled string `json:"downloadEnabled"`
-		CommentsEnabled string `json:"commentsEnabled"`
-		Privacy         string `json:"privacy"`
-		WaitTranscoding string `json:"waitTranscoding"`
+		ChannelID       int    `json:"channelId"`
+		DownloadEnabled bool   `json:"downloadEnabled"`
+		CommentsEnabled bool   `json:"commentsEnabled"`
+		Privacy         int    `json:"privacy"`
+		WaitTranscoding bool   `json:"waitTranscoding"`
 	} `json:"apiConfig"`
 	LoadType struct {
 		LoadPathFromDB     bool     `json:"loadPathFromDB"`
@@ -61,21 +61,21 @@ func (c *Config) LoadConfiguration(file string) {
 				Port            string `json:"port"`
 				Username        string `json:"username"`
 				Password        string `json:"password"`
-				ChannelID       string `json:"channelId"`
-				DownloadEnabled string `json:"downloadEnabled"`
-				CommentsEnabled string `json:"commentsEnabled"`
-				Privacy         string `json:"privacy"`
-				WaitTranscoding string `json:"waitTranscoding"`
+				ChannelID       int    `json:"channelId"`
+				DownloadEnabled bool   `json:"downloadEnabled"`
+				CommentsEnabled bool   `json:"commentsEnabled"`
+				Privacy         int    `json:"privacy"`
+				WaitTranscoding bool   `json:"waitTranscoding"`
 			}{
 				URL:             "http://peertube.localhost",
 				Port:            "9000",
 				Username:        "root",
 				Password:        "ali12345",
-				ChannelID:       "1",
-				DownloadEnabled: "false",
-				CommentsEnabled: "false",
-				Privacy:         "2",
-				WaitTranscoding: "true",
+				ChannelID:       1,
+				DownloadEnabled: false,
+				CommentsEnabled: false,
+				Privacy:         2,
+				WaitTranscoding: true,
 			},
 			LoadType: struct {
 				LoadPathFromDB     bool     `json:"loadPathFromDB"`

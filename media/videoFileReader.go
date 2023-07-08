@@ -1,19 +1,30 @@
-package main
+package media
 
 import (
 	"errors"
 	"fmt"
 	"io"
 	"os"
+
+	"github.com/gabriel-vasile/mimetype"
 )
 
+/*
+This file contains code originally written by FiskFan1999, licensed under the MIT License.
+The original code can be found at: https://github.com/FiskFan1999/peertube-multipart-upload
+*/
 type VideoFileByteCounter int64
+
+const (
+	VideoChunkSize VideoFileByteCounter = 1024 * 1024 * 2
+)
 
 type VideoFileReader struct {
 	VideoFile       *os.File
 	TotalBytes      VideoFileByteCounter
 	ChunkSize       VideoFileByteCounter
 	CurrentMinBytes VideoFileByteCounter
+
 	/*
 		Note: CurrentMaxBytes is calculated from
 		length of byte array
@@ -26,6 +37,8 @@ func GetVideoFileReader(filename string, chunkSize VideoFileByteCounter) (vfr *V
 	if vfr.VideoFile, err = os.Open(filename); err != nil {
 		return
 	}
+
+	// _, _ = GetContentType(vfr.VideoFile)
 
 	/*
 		Calculate total bytes
@@ -54,6 +67,22 @@ type VFRCurrentChunk struct {
 	Finished    bool
 }
 
+func GetContentType(f *os.File) (contentType string, err error) {
+
+	mime, err := mimetype.DetectReader(f)
+	if err != nil {
+		return contentType, err
+	}
+	if mime.Parent() != nil {
+		contentType = mime.Parent().String()
+		fmt.Println(mime.Parent().String())
+	} else {
+		contentType = mime.String()
+	}
+
+	return contentType, nil
+
+}
 func GetFileSize(filename string) (int64, error) {
 	file, err := os.Stat(filename)
 	if err != nil {

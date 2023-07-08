@@ -1,6 +1,9 @@
 package model
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"time"
+)
 
 func UnmarshalLogin(data []byte) (Login, error) {
 	var r Login
@@ -59,6 +62,7 @@ type Media struct {
 	Title       string
 	Description string
 	FilePath    string
+	CreateDate  time.Time
 }
 
 func UnmarshalMetadata(data []byte) (Metadata, error) {

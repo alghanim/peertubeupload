@@ -87,14 +87,14 @@ func UploadMedia(baseURL string, client *http.Client, title string, description 
 
 	}
 
-	_ = writer.WriteField("channelId", c.APIConfig.ChannelID)
-	_ = writer.WriteField("downloadEnabled", c.APIConfig.DownloadEnabled)
-	_ = writer.WriteField("name", title)
-	// _ = writer.WriteField("description", description)
-	_ = writer.WriteField("commentsEnabled", c.APIConfig.CommentsEnabled)
-	_ = writer.WriteField("originallyPublishedAt", originalDateTime)
-	_ = writer.WriteField("privacy", c.APIConfig.Privacy)
-	_ = writer.WriteField("waitTranscoding", c.APIConfig.WaitTranscoding)
+	// _ = writer.WriteField("channelId", c.APIConfig.ChannelID)
+	// _ = writer.WriteField("downloadEnabled", c.APIConfig.DownloadEnabled)
+	// _ = writer.WriteField("name", title)
+	// // _ = writer.WriteField("description", description)
+	// _ = writer.WriteField("commentsEnabled", c.APIConfig.CommentsEnabled)
+	// _ = writer.WriteField("originallyPublishedAt", originalDateTime)
+	// _ = writer.WriteField("privacy", c.APIConfig.Privacy)
+	// _ = writer.WriteField("waitTranscoding", c.APIConfig.WaitTranscoding)
 	err = writer.Close()
 	if err != nil {
 
