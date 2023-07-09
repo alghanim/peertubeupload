@@ -75,7 +75,6 @@ func GetContentType(f *os.File) (contentType string, err error) {
 	}
 	if mime.Parent() != nil {
 		contentType = mime.Parent().String()
-		fmt.Println(mime.Parent().String())
 	} else {
 		contentType = mime.String()
 	}

@@ -24,6 +24,11 @@ func InitDB(c *config.Config) (*sql.DB, error) {
 	}
 
 	var logTableName string
+	if c.LoadType.LoadPathFromDB {
+		logTableName = fmt.Sprintf("%s_to_peertube_log", c.DBConfig.TableName)
+	} else {
+		logTableName = "peertube_log"
+	}
 	switch c.DBConfig.DBType {
 	case "postgres":
 		connStr = fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=disable", c.DBConfig.Username, c.DBConfig.Password, c.DBConfig.Dbname, c.DBConfig.Host, c.DBConfig.Port)
@@ -36,12 +41,6 @@ func InitDB(c *config.Config) (*sql.DB, error) {
 			return nil, err
 		}
 
-		if c.LoadType.LoadPathFromDB {
-			logTableName = fmt.Sprintf("%s_to_peertube_log", c.DBConfig.TableName)
-		} else {
-			logTableName = "peertube_log"
-		}
-
 		err = checkAndCreateOrModifyPostgres(db, logTableName, combinedColumns...)
 
 		if err != nil {
@@ -52,7 +51,7 @@ func InitDB(c *config.Config) (*sql.DB, error) {
 	case "oracle":
 
 		connStr := fmt.Sprintf("%s/%s@%s:%s/%s", c.DBConfig.Username, c.DBConfig.Password, c.DBConfig.Host, c.DBConfig.Port, c.DBConfig.Dbname)
-		db, err := sql.Open("godror", connStr)
+		db, err = sql.Open("godror", connStr)
 		if err != nil {
 			return nil, err
 		}
@@ -157,9 +156,9 @@ func checkTableExists(db *sql.DB, tableName string, dbType string) bool {
 		}
 	case "oracle":
 		query := `
-			SELECT 1
+			select case when exists ( SELECT 1
 			FROM all_tables
-			WHERE table_name = :1
+			WHERE lower(table_name) = :1 ) then 'true' else 'false' end from dual
 		`
 		stmt, err := db.Prepare(query)
 		if err != nil {
@@ -232,8 +231,8 @@ func checkColumnExistsOracle(db *sql.DB, tableName, columnName string) (bool, er
 	query := `
 		SELECT 1
 		FROM all_tab_columns
-		WHERE table_name = :1
-		AND column_name = :2
+		WHERE lower(table_name) = :1
+		AND lower(column_name) = :2
 	`
 	stmt, err := db.Prepare(query)
 	if err != nil {
