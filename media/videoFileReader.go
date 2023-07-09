@@ -16,7 +16,7 @@ The original code can be found at: https://github.com/FiskFan1999/peertube-multi
 type VideoFileByteCounter int64
 
 const (
-	VideoChunkSize VideoFileByteCounter = 1024 * 1024 * 2
+	VideoChunkSize VideoFileByteCounter = 1024 * 1024 * 500
 )
 
 type VideoFileReader struct {

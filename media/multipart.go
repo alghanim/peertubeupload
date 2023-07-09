@@ -48,6 +48,10 @@ type MultipartUploadHandlerHandlerInput struct {
 	OriginallyPublishedAt string
 }
 
+var maxRetries = 3
+
+const delayBetweenRetries = 15 * time.Second
+
 func MultipartUploadHandler(input MultipartUploadHandlerHandlerInput, token string) (video model.Video, err error) {
 
 	client := &http.Client{}
@@ -64,11 +68,12 @@ func MultipartUploadHandler(input MultipartUploadHandlerHandlerInput, token stri
 	}
 	initializePayloadBytes, err := json.Marshal(initializePayload)
 	if err != nil {
-		panic(err)
+		return video, err
+
 	}
 	initialize, err := http.NewRequest("POST", initializeUrl, bytes.NewReader(initializePayloadBytes))
 	if err != nil {
-		panic(err)
+		return video, err
 	}
 
 	initialize.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
@@ -78,7 +83,7 @@ func MultipartUploadHandler(input MultipartUploadHandlerHandlerInput, token stri
 
 	resp, err := client.Do(initialize)
 	if err != nil {
-		panic(err)
+		return video, err
 	}
 
 	if resp.StatusCode != 201 {
@@ -86,11 +91,11 @@ func MultipartUploadHandler(input MultipartUploadHandlerHandlerInput, token stri
 
 		_, err2 := io.ReadAll(resp.Body)
 		if err2 != nil {
-			panic(err)
+			return video, err2
 		}
 		defer resp.Body.Close()
 
-		panic("returned non 201 status code")
+		return video, fmt.Errorf("returned non 201 status %s", resp.Status)
 	}
 
 	defer resp.Body.Close()
@@ -102,39 +107,43 @@ func MultipartUploadHandler(input MultipartUploadHandlerHandlerInput, token stri
 		logger.LogWarning("Warning: recieved an upload location that doesn't begin with \"//\", i don't know what to do with this.", map[string]interface{}{"file": input.FileName})
 		return
 	}
-	logger.LogInfo("Updload Location", map[string]interface{}{"location": uploadLocation})
+	logger.LogInfo("Upload Location", map[string]interface{}{"location": uploadLocation})
 
 	for {
 		chunk, err := input.File.GetNextChunk()
 		if err != nil {
 			logger.LogError("error getting next chunk", map[string]interface{}{"error": err, "file": input.FileName})
-			break
+			return video, err
 		}
 		if chunk.Finished {
 			break
 		}
 
-		// logger.LogInfo("upload details", map[string]interface{}{"MinBye": chunk.MinByte, "MaxByte": chunk.MaxByte, "length": chunk.Length, "RangeHeader": chunk.RangeHeader})
-
 		for {
 			up, err := http.NewRequest("PUT", uploadLocation, bytes.NewReader(chunk.Bytes))
 			if err != nil {
-				panic(err)
+
+				return video, err
+
 			}
 
 			up.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 			up.Header.Add("Content-Length", fmt.Sprintf("%d", chunk.Length))
 			up.Header.Add("Content-Range", chunk.RangeHeader)
 
+			logger.LogInfo("upload details", map[string]interface{}{"MinBye": chunk.MinByte, "MaxByte": chunk.MaxByte, "length": chunk.Length, "RangeHeader": chunk.RangeHeader})
 			resp, err := client.Do(up)
 			if err != nil {
-				panic(err)
+				return video, err
 			}
 			// logger.LogInfo(resp.Status, nil)
+
+			logger.LogInfo("Received response", map[string]interface{}{"uploadLocation": uploadLocation, "statusCode": resp.StatusCode})
+
 			defer resp.Body.Close()
 			body, err2 := io.ReadAll(resp.Body)
 			if err2 != nil {
-				panic(err2)
+				return video, err2
 			}
 			if len(body) != 0 {
 				video, err = model.UnmarshalVideo(body)
@@ -146,12 +155,17 @@ func MultipartUploadHandler(input MultipartUploadHandlerHandlerInput, token stri
 
 			}
 
-			// fmt.Println(string(body))
+			fmt.Println(resp.StatusCode)
 			if resp.StatusCode == 308 || resp.StatusCode == 200 {
 				break
 			} else {
-				logger.LogWarning("Status code other than 308 or 200 recieved. Will retry.", nil)
-				time.Sleep(15 * time.Second)
+				logger.LogWarning("Status code other than 308, 200 or 429 received. Will retry.", nil)
+				time.Sleep(delayBetweenRetries)
+			}
+			maxRetries--
+			if maxRetries <= 0 {
+				logger.LogError("Max retry attempts reached", nil)
+				return video, fmt.Errorf("max retry attempts reached")
 			}
 		}
 	}
