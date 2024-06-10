@@ -103,9 +103,11 @@ func MultipartUploadHandler(input MultipartUploadHandlerHandlerInput, token stri
 
 	if strings.HasPrefix(uploadLocation, "//") {
 		uploadLocation = "http:" + uploadLocation
+	} else if strings.HasPrefix(uploadLocation, "https://") {
+		// Do nothing, continue processing
 	} else {
-		logger.LogWarning("Warning: recieved an upload location that doesn't begin with \"//\", i don't know what to do with this.", map[string]interface{}{"file": input.FileName})
-		return
+		logger.LogWarning("Warning: received an upload location that doesn't begin with \"//\" or \"https://\"", map[string]interface{}{"file": input.FileName})
+		return video, fmt.Errorf("invalid upload location URL: %s", uploadLocation)
 	}
 	logger.LogInfo("Upload Location", map[string]interface{}{"location": uploadLocation})
 
