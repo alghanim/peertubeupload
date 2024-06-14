@@ -37,7 +37,7 @@ type MultipartUploadHandlerHandlerInput struct {
 	DisplayName           string
 	Privacy               int8
 	Category              int
-	CommentsEnabled       bool
+	CommentsPolicy        int
 	DescriptionText       string
 	DownloadEnabled       bool
 	Language              string
@@ -60,7 +60,9 @@ func MultipartUploadHandler(input MultipartUploadHandlerHandlerInput, token stri
 		"channelId":             input.ChannelID,
 		"filename":              input.FileName,
 		"name":                  input.DisplayName,
-		"commentsEnabled":       input.CommentsEnabled,
+		"commentsPolicy":        input.CommentsPolicy,
+		"category":		 input.Category,
+		"language":		 input.Language,
 		"downloadEnabled":       input.DownloadEnabled,
 		"privacy":               input.Privacy,
 		"waitTranscoding":       true,
@@ -187,7 +189,9 @@ func UploadMediaInChunksOS(c *config.Config, media model.Media, token string) (m
 		FileName:              media.FilePath,
 		DisplayName:           media.Title,
 		Privacy:               int8(c.APIConfig.Privacy), // replace with your privacy setting
-		CommentsEnabled:       c.APIConfig.CommentsEnabled,
+		CommentsPolicy:        c.APIConfig.CommentsPolicy,
+		Category:	       c.APIConfig.Category,
+		Language:	       c.APIConfig.Language,
 		DownloadEnabled:       c.APIConfig.DownloadEnabled,
 		OriginallyPublishedAt: media.CreateDate.Format("2006-01-02 15:04:05"),
 	}

@@ -184,8 +184,10 @@ func gatherPathsFromFolder(c *config.Config, filesChan chan<- model.Media) {
 				fileExt := strings.ToLower(filepath.Ext(info.Name()))
 				for _, ext := range c.LoadType.Extensions {
 					if ext == fileExt {
+						title := strings.Replace(strings.TrimSuffix(GetFileName(path), filepath.Ext(GetFileName(path))), "_", " ", -1)
+						
 						filesChan <- model.Media{
-							Title:       GetFileName(path),
+							Title:       title,
 							Description: "",
 							FilePath:    path,
 						}

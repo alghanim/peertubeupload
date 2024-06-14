@@ -15,8 +15,10 @@ type Config struct {
 		Password        string `json:"password"`
 		ChannelID       int    `json:"channelId"`
 		DownloadEnabled bool   `json:"downloadEnabled"`
-		CommentsEnabled bool   `json:"commentsEnabled"`
+		CommentsPolicy  int    `json:"commentsPolicy"`
 		Privacy         int    `json:"privacy"`
+		Category        int    `json:"category"`
+		Language	string `json:"language"`
 		WaitTranscoding bool   `json:"waitTranscoding"`
 	} `json:"apiConfig"`
 	LoadType struct {
@@ -63,8 +65,10 @@ func (c *Config) LoadConfiguration(file string) {
 				Password        string `json:"password"`
 				ChannelID       int    `json:"channelId"`
 				DownloadEnabled bool   `json:"downloadEnabled"`
-				CommentsEnabled bool   `json:"commentsEnabled"`
+				CommentsPolicy  int    `json:"commentsPolicy"`
 				Privacy         int    `json:"privacy"`
+				Category	int    `json:"category"`
+				Language	string `json:"language"`
 				WaitTranscoding bool   `json:"waitTranscoding"`
 			}{
 				URL:             "http://peertube.localhost",
@@ -73,8 +77,10 @@ func (c *Config) LoadConfiguration(file string) {
 				Password:        "ali12345",
 				ChannelID:       1,
 				DownloadEnabled: false,
-				CommentsEnabled: false,
+				CommentsPolicy:  2,
 				Privacy:         2,
+				Category:	 1,
+				Language:	 "en",
 				WaitTranscoding: true,
 			},
 			LoadType: struct {
